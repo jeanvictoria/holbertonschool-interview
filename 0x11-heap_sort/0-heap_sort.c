@@ -1,70 +1,65 @@
+
 #include "sort.h"
+
 /**
- * check_tree - swiftdown check
- * @array: pointer to array
- * @size: size of the pointer
- * @size_init: original size of the array
- * @i: index as a root of the tree
+ * sift_down - sorts an array of integers in ascending order
+ * @array: list to be sorted
+ * @size: length of array
+ * @root: num
  *
- **/
-void check_tree(int *array, size_t size_init, size_t size, size_t i)
+ *
+ * Return: Always 0
+ */
+void sift_down(int *array,  size_t size, size_t root, size_t last)
 {
+	int interim = 0;
+	int key;
 
-	int n, branch1, branch2;
-	size_t br1, br2;
+	size_t bignum = root * 2;
 
-	br1 = i * 2 + 1;
-	br2 = br1 + 1;
-	branch1 = array[br1];
-	branch2 = array[br2];
-	if (((br1 < size) && (br2 < size) &&
-				(branch1 >= branch2 && branch1 > array[i]))
-			|| ((br1 == size - 1) && branch1 > array[i]))
+	if ((bignum <= size) && (array[root - 1] < array[bignum - 1]))
+		interim = bignum - 1;
+	if (bignum + 1 <= size && array[root - 1] < array[bignum]
+		&& array[bignum - 1] < array[bignum])
+		interim = bignum;
+	/* swap algorithm */
+	if (interim)
 	{
-		n = array[i];
-		array[i] = branch1;
-		array[br1] = n;
-		print_array(array, size_init);
+		key = array[interim];
+		array[interim] = array[root - 1];
+		array[root - 1] = key;
+		/* print after each swap */
+		print_array(array, size);
+		sift_down(array, size, 1, last);
+
 	}
-	else if ((br1 < size) && (br2 < size) &&
-			(branch2 > branch1 && branch2 > array[i]))
-	{
-		n = array[i];
-		array[i] = branch2;
-		array[br2] = n;
-		print_array(array, size_init);
-	}
-	if (br1 < size - 1)
-		check_tree(array, size_init, size, br1);
-	if (br2 < size - 1)
-		check_tree(array, size_init, size, br2);
 }
+
 /**
- * heap_sort - sorts an array of integers
- * in ascending order using the Heap
- * sort algorithm
- * @array: pointer to array
- * @size: size of the pointer
+ * heap_sort - sorts an array of integers in ascending order
+ * @array: list of int to sort
+ * @size: length of array
  *
- **/
+ * Return: Always 0
+ */
 void heap_sort(int *array, size_t size)
 {
-	size_t i, size_init = size;
-	int n;
+	size_t idx;
+	int temp;
+	size_t hlast = size;
+	/*size_t root = 0;*/
 
-	if (!array)
-		return;
-	for (i = 0; i < size / 2 ; i++)
+	/*for (idx = (size - 2) / 2; idx > 0; idx--)*/
+	for (idx = (size / 2); idx >= 1; idx--)
 	{
-		check_tree(array, size_init, size, size / 2 - 1 - i);
+		sift_down(array, size, idx, hlast);
 	}
-	for (i = 0; i < size_init - 1; i++)
+	for (idx = 0; idx < size; idx++)
 	{
-		n = array[0];
-		array[0] = array[size - 1 - i];
-		array[size - 1 - i] = n;
-		print_array(array, size_init);
-		check_tree(array, size_init, size - i - 1, 0);
+		temp = array[size - idx - 1];
+		array[size - idx - 1] = array[0];
+		array[0] = temp;
+		print_array(array, size);
+		sift_down(array, size, 1, hlast);
 	}
-
 }
