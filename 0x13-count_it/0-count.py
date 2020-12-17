@@ -1,68 +1,49 @@
 #!/usr/bin/python3
-"""
-Recursive function that queries the Reddit API,
-parses the title of all hot articles, and prints a sorted (list)
-count of given keywords.
-"""
-import collections
-import sys
-from requests import get
+""" simple comment """
+import requests
 
 
-def count_words(subreddit, word_list, after=None, word_match={}):
-    """
-    recursive function parses titles and prints them in a sorted
-    count of given key words
-    Note: imported lIbraries must be in alphabetical order
-    :param subreddit: posts dedicated to a specific topi people write about
-                        on reddit
-    :param word_list: list of words
-    :after: next page
-    :word_match: list of word frequency
-    :return: word, word_count
-    """
-    # get list of hot articles
-    # if not word_list:
-    # return None
-    try:
-        req_data = get("https://www.reddit.com/r/{}/hot.json"
-                       .format(subreddit),
-                       headers={'User-Agent': 'mindz'},
-                       allow_redirects=False,
-                       params={'after': after})
-
-        req_dict = req_data.json()
-
-        if word_match == {}:
-            for words in word_list:
-                word_match[words] = 0
-        after = req_dict['data']['after']
-
-        # parse the words in the data list
-        for pos in range(len(req_dict['data']['children'])):
-            parWord_list = req_dict['data']['children'][pos]['data']['title']
-            iterateList = parWord_list.split()
-
-            # get the words from the word list
-            for word in parWord_list:
-                for wi in word_list:
-                    if wi.lower() == word.lower():
-                        word_match[wi] += 1
-        # order list
-        if after is None:
-            wordMatch_Dict = collections.OrderedDict(sorted(word_match.items(),
-                                                            key=lambda x: x[1],
-                                                            reverse=True))
-            flag = 0
-            for pal, w_count in wordMatch_Dict.items():
-                if w_count != 0:
-                    print("{}: {}".format(pal, w_count))
-                else:
-                    flag += 1
-            if flag == len(wordMatch_Dict):
-                print()
-            # recursive part
-        else:
-            count_words(subreddit, word_list, after, word_match)
-    except Exception:
-        pass
+def count_words(subreddit, word_list, hot_list=[], init=0, after="null"):
+    url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
+    agt = {"User-Agent": "linux:1:v2.1 (by /u/heimer_r)"}
+    payload = {"limit": "100", "after": after}
+    hot = requests.get(url, headers=agt, params=payload, allow_redirects=False)
+    word_list = list(set(word_list))
+    if hot.status_code == 200:
+        posts = hot.json().get("data").get("children")
+        """
+        hot_list += [post.get("data").get("title")
+                     for post in posts
+                     if (post.get("data").get("title")[0:3] != "/r/"
+                         and post.get("data").get("title")[0:2] != "r/")]
+        """
+        hot_list += [post.get("data").get("title") for post in posts]
+        after = hot.json().get("data").get("after")
+        if after is not None:
+            count_words(subreddit, word_list, hot_list, 1, after)
+        if init == 0:
+            hot_str = " ".join(hot_list)
+            hot_words = hot_str.split(" ")
+            word_list_low = sorted(word_list)
+            rt = []
+            for word in word_list_low:
+                num = len(
+                    list(
+                        filter(
+                            lambda hot_w: hot_w.lower() == word.lower(),
+                            hot_words)))
+                if num != 0:
+                    rt.append([word, num])
+            if len(rt) != 0:
+                i = 0
+                while i < len(rt) - 1:
+                    if rt[i + 1][0] is not None and rt[i][0] == rt[i + 1][0]:
+                        rt[i][1] += rt[i + 1][1]
+                        rt.pop(i + 1)
+                        rt.append([None, None])
+                        i -= 1
+                    i += 1
+                r = list(filter(lambda x: x != [None, None], rt))
+                r_sorted = sorted(r, key=lambda x: (x[1]), reverse=True)
+                for i in r_sorted:
+                    print(*i, sep=": ")
