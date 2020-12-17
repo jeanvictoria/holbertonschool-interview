@@ -1,22 +1,27 @@
 #!/usr/bin/python3
-""" simple comment """
+"""
+Count it!
+"""
+from operator import itemgetter
 import requests
 
 
 def count_words(subreddit, word_list, hot_list=[], init=0, after="null"):
+    """
+    Recursive function that queries the Reddit API,
+    parses the title of all hot articles, and prints a sorted count of
+    given keywords (case-insensitive, delimited by spaces. Javascript should
+    count as javascript, but java should not).
+    """
+
     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    agt = {"User-Agent": "linux:1:v2.1 (by /u/heimer_r)"}
+    agent = {"User-Agent": "linux:1:v2.1 (by /u/heimer_r)"}
     payload = {"limit": "100", "after": after}
-    hot = requests.get(url, headers=agt, params=payload, allow_redirects=False)
-    word_list = list(set(word_list))
+    hot = requests.get(url, headers=agent,
+                       params=payload, allow_redirects=False)
+
     if hot.status_code == 200:
         posts = hot.json().get("data").get("children")
-        """
-        hot_list += [post.get("data").get("title")
-                     for post in posts
-                     if (post.get("data").get("title")[0:3] != "/r/"
-                         and post.get("data").get("title")[0:2] != "r/")]
-        """
         hot_list += [post.get("data").get("title") for post in posts]
         after = hot.json().get("data").get("after")
         if after is not None:
